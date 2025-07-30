@@ -397,6 +397,7 @@ typedef MD_PARSER MD_RENDERER;
  * fails), -1 is returned. If the processing is aborted due any callback
  * returning non-zero, the return value of the callback is returned.
  */
+ __declspec(dllexport)
 int md_parse(const MD_CHAR* text, MD_SIZE size, const MD_PARSER* parser, void* userdata);
 
 

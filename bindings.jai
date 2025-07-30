@@ -1,7 +1,7 @@
 //
 // This file was auto-generated using the following command:
 //
-// jai generate.jai
+// jai generate.jai - -compile
 //
 
 
@@ -342,7 +342,7 @@ md_parse :: (text: *MD_CHAR, size: MD_SIZE, parser: *MD_PARSER, userdata: *void)
 * Returns -1 on error (if md_parse() fails.)
 * Returns 0 on success.
 */
-md_html :: (input: *MD_CHAR, input_size: MD_SIZE, process_output: #type (unknown0: *MD_CHAR, unknown1: MD_SIZE, unknown2: *void) -> void #c_call, userdata: *void, parser_flags: u32, renderer_flags: u32) -> s32 #foreign md4c_html;
+md_html :: (input: *MD_CHAR, input_size: MD_SIZE, process_output: #type (unknown0: *MD_CHAR, unknown1: MD_SIZE, unknown2: *void) -> void #c_call, userdata: *void, parser_flags: u32, renderer_flags: u32) -> s32 #foreign md4c;
 
 /* Most entities are formed by single Unicode codepoint, few by two codepoints.
 * Single-codepoint entities have codepoints[1] set to zero. */
@@ -352,9 +352,8 @@ ENTITY_tag :: struct {
     codepoints: [2] u32;
 }
 
-entity_lookup :: (name: *u8, name_size: u64) -> *ENTITY #foreign md4c_html;
+entity_lookup :: (name: *u8, name_size: u64) -> *ENTITY #foreign md4c;
 
 #scope_file
 
 md4c :: #library "windows/md4c";
-md4c_html :: #library "windows/md4c-html";

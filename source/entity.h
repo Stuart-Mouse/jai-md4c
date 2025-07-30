@@ -37,6 +37,7 @@ struct ENTITY_tag {
     unsigned codepoints[2];
 };
 
+ __declspec(dllexport)
 const ENTITY* entity_lookup(const char* name, size_t name_size);
 
 

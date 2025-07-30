@@ -56,6 +56,7 @@
  * Returns -1 on error (if md_parse() fails.)
  * Returns 0 on success.
  */
+ __declspec(dllexport)
 int md_html(const MD_CHAR* input, MD_SIZE input_size,
             void (*process_output)(const MD_CHAR*, MD_SIZE, void*),
             void* userdata, unsigned parser_flags, unsigned renderer_flags);

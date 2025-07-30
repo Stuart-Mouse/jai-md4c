@@ -1,8 +1,22 @@
+/*
+    NOTE:
+        I had to do a couple little workarounds in the original source code in order
+        to be able to properly build the static and dynamic libs from source here.
+        Specifically:
+            1. including all files from a single `all.c` file
+            2. adding `declspec(dllexport)` to the public interface functions (md_parse, md_html, entity_lookup)
+                - maybe this needs to be different if someone is not building on Windows
+            
+        Maybe I didn't really *need* to do it this way but I am a little retarded and this was the most straightforward solution.
+        The first workaround was done just so that both md4c and md4c-html get compiled into a single lib instead of 2 separate libs.
+        This was causing me issues with linking when it came time to actually build the main program, 
+            since md4c-html itself needs to be linked against md4c or something.
+        
+*/
 
 AT_COMPILE_TIME :: true;
 
 SOURCE_PATH :: "source";
-// LIB_BASE_NAME :: "md4c";
 
 INCLUDE_FILES :: string.[
     "md4c.h", 
@@ -47,35 +61,17 @@ generate_bindings :: (args: [] string, minimum_os_version: type_of(Build_Options
             assert(false);
     }
     
-    // Can't get this to work at the moment, so whatever...
-    // I probably just need to build the entity.c file separately as some obj and then pass that when building md4c-html?
-    // if compile {
-    //     success := true;
-    //     {
-    //         source_files := string.[
-    //             tprint("%/md4c.c",      SOURCE_PATH),
-    //         ];
-    //         make_directory_if_it_does_not_exist(lib_directory, recursive = true);
-    //         lib_path := tprint("%/%", lib_directory, "md4c");
-    //         success &&= build_cpp_dynamic_lib(lib_path, ..source_files, target = os_target, debug = compile_debug);
-    //         success &&= build_cpp_static\_lib(lib_path, ..source_files, target = os_target, debug = compile_debug);
-            
-    //         log("===== BUILDING OBJ ====");
-    //         success &&= build_cpp(lib_path, ..source_files, .OBJ_FILE,  target = os_target, debug = compile_debug);
-    //         log("===== BUILDING OBJ % ====", ifx success then "SUCCESS" else "FAILED");
-    //     }
-    //     {
-    //         source_files := string.[
-    //             tprint("%/md4c-html.c", SOURCE_PATH),
-    //             tprint("%/entity.c",    SOURCE_PATH),
-    //         ];
-    //         make_directory_if_it_does_not_exist(lib_directory, recursive = true);
-    //         lib_path := tprint("%/%", lib_directory, "md4c-html");
-    //         success &&= build_cpp_dynamic_lib(lib_path, ..source_files, target = os_target, debug = compile_debug, library_files=.["windows/md4c"]);
-    //         success &&= build_cpp_static\_lib(lib_path, ..source_files, target = os_target, debug = compile_debug, library_files=.["windows/md4c"]);
-    //     }
-    //     if !success     return false;
-    // }
+    if compile {
+        success := true;
+        {
+            source_file := tprint("%/all.c", SOURCE_PATH);
+            make_directory_if_it_does_not_exist(lib_directory, recursive = true);
+            lib_path := tprint("%/%", lib_directory, "md4c");
+            success &&= build_cpp_dynamic_lib(lib_path, source_file, target = os_target, debug = compile_debug);
+            success &&= build_cpp_static_lib (lib_path, source_file, target = os_target, debug = compile_debug);
+        }
+        if !success     return false;
+    }
     
     options: Generate_Bindings_Options;
     options.os = os_target;
@@ -83,18 +79,11 @@ generate_bindings :: (args: [] string, minimum_os_version: type_of(Build_Options
     {
         using options;
         
-        // strip_flags &= ~.SYMBOLS_WITH_UNKNOWN_FOREIGN_LIBS;
+        array_add(*library_search_paths, lib_directory);
+        array_add(*libraries, .{ filename = "md4c" });
         
-        array_add(*libpaths, lib_directory);
-        array_add(*libnames, "md4c");
-        array_add(*libnames, "md4c-html");
-        
-        // array_add(*include_paths, SOURCE_PATH);
         for INCLUDE_FILES array_add(*source_files, tprint("%/%", SOURCE_PATH, it));
         
-        // generate_library_declarations = false;
-        // footer = tprint(FOOTER_TEMPLATE, "md4c");
-
         auto_detect_enum_prefixes = true;
         log_stripped_declarations = true;
         generate_compile_time_struct_checks = false;
@@ -103,18 +92,6 @@ generate_bindings :: (args: [] string, minimum_os_version: type_of(Build_Options
     output_filename := "bindings.jai";
     return generate_bindings(options, output_filename);
 }
-
-// FOOTER_TEMPLATE :: #string END
-
-// #if OS == .WINDOWS {
-//     %1 :: #library "windows/%1";
-// } else #if OS == .LINUX {
-//     %1 :: #library "linux/%1";
-// } else {
-//     #assert false;
-// }
-
-// END
 
 #import "Basic";
 #import "BuildCpp";
